@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -16,7 +16,7 @@ interface Project {
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RouterLink],
     template: `
     <div class="dashboard">
       <!-- Sidebar -->
@@ -27,21 +27,13 @@ interface Project {
         </div>
         
         <nav class="nav-menu">
-          <a class="nav-item active">
+          <a class="nav-item active" routerLink="/dashboard">
             <span class="nav-icon">📊</span>
             Dashboard
           </a>
-          <a class="nav-item">
-            <span class="nav-icon">📁</span>
-            Projects
-          </a>
-          <a class="nav-item">
-            <span class="nav-icon">🐞</span>
-            Issues
-          </a>
-          <a class="nav-item">
-            <span class="nav-icon">⚙️</span>
-            Settings
+          <a class="nav-item" routerLink="/users" *ngIf="isAdmin()">
+            <span class="nav-icon">👥</span>
+            Users
           </a>
         </nav>
         
@@ -105,11 +97,14 @@ interface Project {
           </div>
           
           <div class="projects-grid" *ngIf="projects.length > 0">
-            <div class="project-card" *ngFor="let project of projects">
+            <div class="project-card" *ngFor="let project of projects" [routerLink]="['/projects', project.id, 'board']">
               <h3>{{ project.name }}</h3>
               <p>{{ project.description || 'No description' }}</p>
               <div class="project-meta">
                 <span>Created: {{ project.createdAt | date:'short' }}</span>
+              </div>
+              <div class="project-action">
+                <span class="view-board">View Board →</span>
               </div>
             </div>
           </div>
@@ -468,6 +463,18 @@ interface Project {
       color: #fff;
       cursor: pointer;
     }
+
+    .project-action {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .view-board {
+      color: #6366f1;
+      font-size: 13px;
+      font-weight: 500;
+    }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -513,5 +520,9 @@ export class DashboardComponent implements OnInit {
     logout() {
         this.authService.logout();
         this.router.navigate(['/login']);
+    }
+
+    isAdmin(): boolean {
+        return this.user?.roles?.includes('ROLE_ADMIN') || false;
     }
 }
