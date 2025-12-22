@@ -1,4 +1,6 @@
 export const environment = {
     production: true,
-    apiUrl: '/api'  // In production, nginx proxies /api to backend
+    apiUrl: '/api',
+    supabaseUrl: 'YOUR_SUPABASE_URL',
+    supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
 };

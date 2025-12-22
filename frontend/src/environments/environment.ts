@@ -1,4 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8081/api'
+    production: false,
+    apiUrl: '/api',
+    supabaseUrl: 'YOUR_SUPABASE_URL',
+    supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
 };

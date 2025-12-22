@@ -1,18 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, from, map } from 'rxjs';
+import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 
 export interface User {
-    id: string;
-    email: string;
-    fullName: string;
-    roles: string[];
-}
-
-export interface AuthResponse {
-    token: string;
-    refreshToken: string;
     id: string;
     email: string;
     fullName: string;
@@ -23,54 +15,79 @@ export interface AuthResponse {
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = environment.apiUrl;
+    private supabase: SupabaseClient;
     private currentUserSubject = new BehaviorSubject<User | null>(null);
     public currentUser$ = this.currentUserSubject.asObservable();
 
     constructor(private http: HttpClient) {
-        // Check if user is already logged in
-        const token = localStorage.getItem('token');
-        const user = localStorage.getItem('user');
-        if (token && user) {
-            this.currentUserSubject.next(JSON.parse(user));
-        }
+        this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
+
+        // Listen to auth changes
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            if (session?.user) {
+                this.updateCurrentUser(session.user);
+            } else {
+                this.currentUserSubject.next(null);
+            }
+        });
+
+        // Initialize user
+        this.supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                this.updateCurrentUser(session.user);
+            }
+        });
     }
 
-    login(email: string, password: string): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, { email, password })
-            .pipe(
-                tap(response => {
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('refreshToken', response.refreshToken);
-                    const user: User = {
-                        id: response.id,
-                        email: response.email,
-                        fullName: response.fullName,
-                        roles: response.roles
-                    };
-                    localStorage.setItem('user', JSON.stringify(user));
-                    this.currentUserSubject.next(user);
-                })
-            );
+    private updateCurrentUser(sbUser: SupabaseUser) {
+        const user: User = {
+            id: sbUser.id,
+            email: sbUser.email || '',
+            fullName: sbUser.user_metadata?.['full_name'] || sbUser.email?.split('@')[0] || 'User',
+            roles: sbUser.user_metadata?.['roles'] || ['ROLE_MEMBER']
+        };
+        this.currentUserSubject.next(user);
+    }
+
+    login(email: string, password: string): Observable<any> {
+        return from(this.supabase.auth.signInWithPassword({ email, password })).pipe(
+            map(({ data, error }) => {
+                if (error) throw error;
+                return data;
+            })
+        );
     }
 
     register(fullName: string, email: string, password: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/auth/register`, { fullName, email, password });
+        return from(this.supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    roles: ['ROLE_MEMBER']
+                }
+            }
+        })).pipe(
+            map(({ data, error }) => {
+                if (error) throw error;
+                return data;
+            })
+        );
     }
 
     logout(): void {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        this.supabase.auth.signOut();
         this.currentUserSubject.next(null);
     }
 
-    getToken(): string | null {
-        return localStorage.getItem('token');
+    async getToken(): Promise<string | null> {
+        const { data: { session } } = await this.supabase.auth.getSession();
+        return session?.access_token || null;
     }
 
     isLoggedIn(): boolean {
-        return !!this.getToken();
+        return !!this.currentUserSubject.value;
     }
 
     getCurrentUser(): User | null {
