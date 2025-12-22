@@ -6,27 +6,27 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 interface Issue {
-    id: string;
-    title: string;
-    description: string;
-    status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
-    assignee?: { id: string; fullName: string };
-    reporter?: { id: string; fullName: string };
-    createdAt: string;
+  id: string;
+  title: string;
+  description: string;
+  status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  assignee?: { id: string; fullName: string };
+  reporter?: { id: string; fullName: string };
+  createdAt: string;
 }
 
 interface Project {
-    id: string;
-    name: string;
-    description: string;
+  id: string;
+  name: string;
+  description: string;
 }
 
 @Component({
-    selector: 'app-issue-board',
-    standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
-    template: `
+  selector: 'app-issue-board',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
     <div class="board-container">
       <!-- Header -->
       <header class="board-header">
@@ -49,9 +49,9 @@ interface Project {
           <div class="column-cards">
             <div class="issue-card" *ngFor="let issue of getIssuesByStatus('TO_DO')"
                  [routerLink]="['/issues', issue.id]">
-              <span class="priority-badge" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
+              <span class="priority-badge" *ngIf="issue.priority" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
               <h4>{{ issue.title }}</h4>
-              <p>{{ issue.description | slice:0:80 }}{{ issue.description?.length > 80 ? '...' : '' }}</p>
+              <p>{{ (issue.description || '') | slice:0:80 }}{{ (issue.description?.length || 0) > 80 ? '...' : '' }}</p>
               <div class="card-footer">
                 <span class="assignee" *ngIf="issue.assignee">{{ issue.assignee.fullName }}</span>
                 <span class="assignee unassigned" *ngIf="!issue.assignee">Unassigned</span>
@@ -70,9 +70,9 @@ interface Project {
           <div class="column-cards">
             <div class="issue-card" *ngFor="let issue of getIssuesByStatus('IN_PROGRESS')"
                  [routerLink]="['/issues', issue.id]">
-              <span class="priority-badge" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
+              <span class="priority-badge" *ngIf="issue.priority" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
               <h4>{{ issue.title }}</h4>
-              <p>{{ issue.description | slice:0:80 }}{{ issue.description?.length > 80 ? '...' : '' }}</p>
+              <p>{{ (issue.description || '') | slice:0:80 }}{{ (issue.description?.length || 0) > 80 ? '...' : '' }}</p>
               <div class="card-footer">
                 <span class="assignee" *ngIf="issue.assignee">{{ issue.assignee.fullName }}</span>
                 <span class="assignee unassigned" *ngIf="!issue.assignee">Unassigned</span>
@@ -91,9 +91,9 @@ interface Project {
           <div class="column-cards">
             <div class="issue-card" *ngFor="let issue of getIssuesByStatus('DONE')"
                  [routerLink]="['/issues', issue.id]">
-              <span class="priority-badge" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
+              <span class="priority-badge" *ngIf="issue.priority" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
               <h4>{{ issue.title }}</h4>
-              <p>{{ issue.description | slice:0:80 }}{{ issue.description?.length > 80 ? '...' : '' }}</p>
+              <p>{{ (issue.description || '') | slice:0:80 }}{{ (issue.description?.length || 0) > 80 ? '...' : '' }}</p>
               <div class="card-footer">
                 <span class="assignee" *ngIf="issue.assignee">{{ issue.assignee.fullName }}</span>
                 <span class="assignee unassigned" *ngIf="!issue.assignee">Unassigned</span>
@@ -143,7 +143,7 @@ interface Project {
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .board-container {
       min-height: 100vh;
       background: #0f0f17;
@@ -401,54 +401,54 @@ interface Project {
   `]
 })
 export class IssueBoardComponent implements OnInit {
-    project: Project | null = null;
-    issues: Issue[] = [];
-    showCreateModal = false;
-    projectId: string = '';
+  project: Project | null = null;
+  issues: Issue[] = [];
+  showCreateModal = false;
+  projectId: string = '';
 
-    newIssue = {
-        title: '',
-        description: '',
-        priority: 'MEDIUM',
-        status: 'TO_DO'
-    };
+  newIssue = {
+    title: '',
+    description: '',
+    priority: 'MEDIUM',
+    status: 'TO_DO'
+  };
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private http: HttpClient
-    ) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private http: HttpClient
+  ) { }
 
-    ngOnInit() {
-        this.projectId = this.route.snapshot.paramMap.get('projectId') || '';
-        this.loadProject();
-        this.loadIssues();
-    }
+  ngOnInit() {
+    this.projectId = this.route.snapshot.paramMap.get('projectId') || '';
+    this.loadProject();
+    this.loadIssues();
+  }
 
-    loadProject() {
-        this.http.get<Project>(`${environment.apiUrl}/projects/${this.projectId}`).subscribe({
-            next: (project) => this.project = project,
-            error: () => this.router.navigate(['/dashboard'])
-        });
-    }
+  loadProject() {
+    this.http.get<Project>(`${environment.apiUrl}/projects/${this.projectId}`).subscribe({
+      next: (project) => this.project = project,
+      error: () => this.router.navigate(['/dashboard'])
+    });
+  }
 
-    loadIssues() {
-        this.http.get<Issue[]>(`${environment.apiUrl}/projects/${this.projectId}/issues`).subscribe({
-            next: (issues) => this.issues = issues
-        });
-    }
+  loadIssues() {
+    this.http.get<Issue[]>(`${environment.apiUrl}/projects/${this.projectId}/issues`).subscribe({
+      next: (issues) => this.issues = issues
+    });
+  }
 
-    getIssuesByStatus(status: string): Issue[] {
-        return this.issues.filter(i => i.status === status);
-    }
+  getIssuesByStatus(status: string): Issue[] {
+    return this.issues.filter(i => i.status === status);
+  }
 
-    createIssue() {
-        this.http.post<Issue>(`${environment.apiUrl}/projects/${this.projectId}/issues`, this.newIssue).subscribe({
-            next: (issue) => {
-                this.issues.push(issue);
-                this.showCreateModal = false;
-                this.newIssue = { title: '', description: '', priority: 'MEDIUM', status: 'TO_DO' };
-            }
-        });
-    }
+  createIssue() {
+    this.http.post<Issue>(`${environment.apiUrl}/projects/${this.projectId}/issues`, this.newIssue).subscribe({
+      next: (issue) => {
+        this.issues.push(issue);
+        this.showCreateModal = false;
+        this.newIssue = { title: '', description: '', priority: 'MEDIUM', status: 'TO_DO' };
+      }
+    });
+  }
 }

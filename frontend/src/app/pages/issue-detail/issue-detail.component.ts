@@ -7,34 +7,34 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
 
 interface Issue {
-    id: string;
-    title: string;
-    description: string;
-    status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
-    assignee?: { id: string; fullName: string; email: string };
-    reporter?: { id: string; fullName: string };
-    project?: { id: string; name: string };
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  title: string;
+  description: string;
+  status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  assignee?: { id: string; fullName: string; email: string };
+  reporter?: { id: string; fullName: string };
+  project?: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Comment {
-    id: string;
-    content: string;
-    author: { id: string; fullName: string };
-    createdAt: string;
+  id: string;
+  content: string;
+  author: { id: string; fullName: string };
+  createdAt: string;
 }
 
 @Component({
-    selector: 'app-issue-detail',
-    standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
-    template: `
+  selector: 'app-issue-detail',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
     <div class="detail-container">
       <!-- Header -->
       <header class="detail-header">
-        <a [routerLink]="issue?.project ? ['/projects', issue.project.id, 'board'] : ['/dashboard']" class="back-btn">
+        <a [routerLink]="issue?.project ? ['/projects', issue?.project?.id, 'board'] : ['/dashboard']" class="back-btn">
           ← Back to Board
         </a>
         <div class="header-actions">
@@ -49,7 +49,7 @@ interface Comment {
           <div class="title-section">
             <input *ngIf="editing" [(ngModel)]="issue.title" class="title-input" (blur)="saveChanges()">
             <h1 *ngIf="!editing" (click)="editing = true">{{ issue.title }}</h1>
-            <span class="priority-badge" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
+            <span class="priority-badge" *ngIf="issue.priority" [class]="issue.priority.toLowerCase()">{{ issue.priority }}</span>
           </div>
 
           <!-- Description -->
@@ -73,12 +73,12 @@ interface Comment {
             <div class="comments-list">
               <div class="comment" *ngFor="let comment of comments">
                 <div class="comment-header">
-                  <div class="comment-avatar">{{ comment.author.fullName.charAt(0) }}</div>
+                  <div class="comment-avatar">{{ (comment?.author?.fullName || 'U').charAt(0) }}</div>
                   <div class="comment-meta">
-                    <span class="comment-author">{{ comment.author.fullName }}</span>
+                    <span class="comment-author">{{ comment?.author?.fullName }}</span>
                     <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
                   </div>
-                  <button class="delete-comment" *ngIf="comment.author.id === currentUserId" 
+                  <button class="delete-comment" *ngIf="comment?.author?.id === currentUserId" 
                           (click)="deleteComment(comment.id)">×</button>
                 </div>
                 <div class="comment-body">{{ comment.content }}</div>
@@ -114,8 +114,8 @@ interface Comment {
           <div class="sidebar-card">
             <h4>Assignee</h4>
             <div class="assignee-info" *ngIf="issue.assignee">
-              <div class="assignee-avatar">{{ issue.assignee.fullName.charAt(0) }}</div>
-              <span>{{ issue.assignee.fullName }}</span>
+              <div class="assignee-avatar">{{ (issue?.assignee?.fullName || 'U').charAt(0) }}</div>
+              <span>{{ issue?.assignee?.fullName }}</span>
             </div>
             <span class="unassigned" *ngIf="!issue.assignee">Unassigned</span>
           </div>
@@ -123,8 +123,8 @@ interface Comment {
           <div class="sidebar-card">
             <h4>Reporter</h4>
             <div class="assignee-info" *ngIf="issue.reporter">
-              <div class="assignee-avatar">{{ issue.reporter.fullName.charAt(0) }}</div>
-              <span>{{ issue.reporter.fullName }}</span>
+              <div class="assignee-avatar">{{ (issue?.reporter?.fullName || 'U').charAt(0) }}</div>
+              <span>{{ issue?.reporter?.fullName }}</span>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ interface Comment {
       <div class="loading" *ngIf="!issue">Loading issue...</div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .detail-container {
       min-height: 100vh;
       background: #0f0f17;
@@ -462,79 +462,79 @@ interface Comment {
   `]
 })
 export class IssueDetailComponent implements OnInit {
-    issue: Issue | null = null;
-    comments: Comment[] = [];
-    newComment = '';
-    editing = false;
-    currentUserId: string = '';
+  issue: Issue | null = null;
+  comments: Comment[] = [];
+  newComment = '';
+  editing = false;
+  currentUserId: string = '';
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private http: HttpClient,
-        private authService: AuthService
-    ) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
 
-    ngOnInit() {
-        const issueId = this.route.snapshot.paramMap.get('issueId');
-        this.currentUserId = this.authService.getCurrentUser()?.id || '';
-        this.loadIssue(issueId!);
-        this.loadComments(issueId!);
-    }
+  ngOnInit() {
+    const issueId = this.route.snapshot.paramMap.get('issueId');
+    this.currentUserId = this.authService.getCurrentUser()?.id || '';
+    this.loadIssue(issueId!);
+    this.loadComments(issueId!);
+  }
 
-    loadIssue(id: string) {
-        this.http.get<Issue>(`${environment.apiUrl}/issues/${id}`).subscribe({
-            next: (issue) => this.issue = issue,
-            error: () => this.router.navigate(['/dashboard'])
-        });
-    }
+  loadIssue(id: string) {
+    this.http.get<Issue>(`${environment.apiUrl}/issues/${id}`).subscribe({
+      next: (issue) => this.issue = issue,
+      error: () => this.router.navigate(['/dashboard'])
+    });
+  }
 
-    loadComments(issueId: string) {
-        this.http.get<Comment[]>(`${environment.apiUrl}/issues/${issueId}/comments`).subscribe({
-            next: (comments) => this.comments = comments
-        });
-    }
+  loadComments(issueId: string) {
+    this.http.get<Comment[]>(`${environment.apiUrl}/issues/${issueId}/comments`).subscribe({
+      next: (comments) => this.comments = comments
+    });
+  }
 
-    saveChanges() {
-        if (!this.issue) return;
-        this.http.patch<Issue>(`${environment.apiUrl}/issues/${this.issue.id}`, {
-            title: this.issue.title,
-            description: this.issue.description,
-            status: this.issue.status,
-            priority: this.issue.priority
-        }).subscribe({
-            next: (updated) => {
-                this.issue = updated;
-                this.editing = false;
-            }
-        });
-    }
+  saveChanges() {
+    if (!this.issue) return;
+    this.http.patch<Issue>(`${environment.apiUrl}/issues/${this.issue.id}`, {
+      title: this.issue.title,
+      description: this.issue.description,
+      status: this.issue.status,
+      priority: this.issue.priority
+    }).subscribe({
+      next: (updated) => {
+        this.issue = updated;
+        this.editing = false;
+      }
+    });
+  }
 
-    addComment() {
-        if (!this.issue || !this.newComment.trim()) return;
-        this.http.post<Comment>(`${environment.apiUrl}/issues/${this.issue.id}/comments`, {
-            content: this.newComment
-        }).subscribe({
-            next: (comment) => {
-                this.comments.unshift(comment);
-                this.newComment = '';
-            }
-        });
-    }
+  addComment() {
+    if (!this.issue || !this.newComment.trim()) return;
+    this.http.post<Comment>(`${environment.apiUrl}/issues/${this.issue.id}/comments`, {
+      content: this.newComment
+    }).subscribe({
+      next: (comment) => {
+        this.comments.unshift(comment);
+        this.newComment = '';
+      }
+    });
+  }
 
-    deleteComment(commentId: string) {
-        if (!this.issue) return;
-        this.http.delete(`${environment.apiUrl}/issues/${this.issue.id}/comments/${commentId}`).subscribe({
-            next: () => {
-                this.comments = this.comments.filter(c => c.id !== commentId);
-            }
-        });
-    }
+  deleteComment(commentId: string) {
+    if (!this.issue) return;
+    this.http.delete(`${environment.apiUrl}/issues/${this.issue.id}/comments/${commentId}`).subscribe({
+      next: () => {
+        this.comments = this.comments.filter(c => c.id !== commentId);
+      }
+    });
+  }
 
-    deleteIssue() {
-        if (!this.issue || !confirm('Are you sure you want to delete this issue?')) return;
-        this.http.delete(`${environment.apiUrl}/issues/${this.issue.id}`).subscribe({
-            next: () => this.router.navigate(['/dashboard'])
-        });
-    }
+  deleteIssue() {
+    if (!this.issue || !confirm('Are you sure you want to delete this issue?')) return;
+    this.http.delete(`${environment.apiUrl}/issues/${this.issue.id}`).subscribe({
+      next: () => this.router.navigate(['/dashboard'])
+    });
+  }
 }

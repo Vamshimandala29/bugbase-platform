@@ -27,11 +27,11 @@ interface Project {
         </div>
         
         <nav class="nav-menu">
-          <a class="nav-item active" routerLink="/dashboard">
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
             <span class="nav-icon">📊</span>
             Dashboard
           </a>
-          <a class="nav-item" routerLink="/users" *ngIf="isAdmin()">
+          <a class="nav-item" routerLink="/users" routerLinkActive="active" *ngIf="isAdmin()">
             <span class="nav-icon">👥</span>
             Users
           </a>
@@ -39,7 +39,7 @@ interface Project {
         
         <div class="user-section">
           <div class="user-info">
-            <div class="user-avatar">{{ user?.fullName?.charAt(0) || 'U' }}</div>
+            <div class="user-avatar">{{ (user?.fullName || 'U').charAt(0) }}</div>
             <div class="user-details">
               <span class="user-name">{{ user?.fullName }}</span>
               <span class="user-email">{{ user?.email }}</span>
