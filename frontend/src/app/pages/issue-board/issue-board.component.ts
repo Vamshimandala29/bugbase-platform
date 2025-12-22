@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 interface Issue {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   assignee?: { id: string; fullName: string };

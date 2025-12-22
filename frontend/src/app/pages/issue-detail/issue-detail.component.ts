@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth.service';
 interface Issue {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   assignee?: { id: string; fullName: string; email: string };
@@ -34,7 +34,7 @@ interface Comment {
     <div class="detail-container">
       <!-- Header -->
       <header class="detail-header">
-        <a [routerLink]="issue?.project ? ['/projects', issue?.project?.id, 'board'] : ['/dashboard']" class="back-btn">
+        <a [routerLink]="(issue && issue.project) ? ['/projects', issue.project.id, 'board'] : ['/dashboard']" class="back-btn">
           ← Back to Board
         </a>
         <div class="header-actions">
