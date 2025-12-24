@@ -32,11 +32,9 @@ services:
         generateValue: true
 
   # Frontend Static Site
-  - type: web
+  - type: static_site
     name: bugbase-frontend
-    env: static
     region: ohio
-    plan: free
     rootDirectory: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist/frontend/browser
