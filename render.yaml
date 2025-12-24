@@ -7,7 +7,7 @@ services:
   # Backend Spring Boot Service
   - type: web
     name: bugbase-backend
-    env: java
+    runtime: java
     region: ohio
     plan: free
     rootDirectory: backend
@@ -32,8 +32,9 @@ services:
         generateValue: true
 
   # Frontend Static Site
-  - type: static_site
+  - type: web
     name: bugbase-frontend
+    runtime: static
     region: ohio
     rootDirectory: frontend
     buildCommand: npm install && npm run build
