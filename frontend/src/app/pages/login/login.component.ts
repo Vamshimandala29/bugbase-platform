@@ -215,7 +215,8 @@ export class LoginComponent {
             },
             error: (err) => {
                 this.loading = false;
-                this.error = err.error?.message || 'Login failed. Please check your credentials.';
+                console.error('Login error:', err);
+                this.error = err.message || 'Login failed. Please check your credentials.';
             }
         });
     }

@@ -237,15 +237,16 @@ export class RegisterComponent {
         this.success = '';
 
         this.authService.register(this.fullName, this.email, this.password).subscribe({
-            next: () => {
-                this.success = 'Account created successfully! Redirecting to login...';
+            next: (data) => {
+                this.loading = false;
+                this.success = 'Account created successfully! Redirecting...';
                 setTimeout(() => {
-                    this.router.navigate(['/login']);
-                }, 2000);
+                    this.router.navigate([data?.session ? '/dashboard' : '/login']);
+                }, 1500);
             },
             error: (err) => {
                 this.loading = false;
-                this.error = err.error?.message || 'Registration failed. Please try again.';
+                this.error = err.message || 'Registration failed. Please try again.';
             }
         });
     }

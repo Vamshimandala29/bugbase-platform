@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, map } from 'rxjs';
-import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface User {
@@ -15,79 +14,53 @@ export interface User {
     providedIn: 'root'
 })
 export class AuthService {
-    private supabase: SupabaseClient;
+    private apiUrl = `${environment.apiUrl}/auth`;
     private currentUserSubject = new BehaviorSubject<User | null>(null);
     public currentUser$ = this.currentUserSubject.asObservable();
 
     constructor(private http: HttpClient) {
-        this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
-
-        // Listen to auth changes
-        this.supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) {
-                this.updateCurrentUser(session.user);
-            } else {
-                this.currentUserSubject.next(null);
-            }
-        });
-
-        // Initialize user
-        this.supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                this.updateCurrentUser(session.user);
-            }
-        });
-    }
-
-    private updateCurrentUser(sbUser: SupabaseUser) {
-        const user: User = {
-            id: sbUser.id,
-            email: sbUser.email || '',
-            fullName: sbUser.user_metadata?.['full_name'] || sbUser.email?.split('@')[0] || 'User',
-            roles: sbUser.user_metadata?.['roles'] || ['ROLE_MEMBER']
-        };
-        this.currentUserSubject.next(user);
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            this.currentUserSubject.next(JSON.parse(savedUser));
+        }
     }
 
     login(email: string, password: string): Observable<any> {
-        return from(this.supabase.auth.signInWithPassword({ email, password })).pipe(
-            map(({ data, error }) => {
-                if (error) throw error;
-                return data;
+        return this.http.post<any>(`${this.apiUrl}/login`, { email, password }).pipe(
+            tap(response => {
+                if (response.token) {
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('refreshToken', response.refreshToken);
+                    const user: User = {
+                        id: response.id,
+                        email: response.email,
+                        fullName: response.fullName,
+                        roles: response.roles
+                    };
+                    localStorage.setItem('user', JSON.stringify(user));
+                    this.currentUserSubject.next(user);
+                }
             })
         );
     }
 
     register(fullName: string, email: string, password: string): Observable<any> {
-        return from(this.supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName,
-                    roles: ['ROLE_MEMBER']
-                }
-            }
-        })).pipe(
-            map(({ data, error }) => {
-                if (error) throw error;
-                return data;
-            })
-        );
+        return this.http.post(`${this.apiUrl}/register`, { fullName, email, password });
     }
 
     logout(): void {
-        this.supabase.auth.signOut();
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         this.currentUserSubject.next(null);
     }
 
-    async getToken(): Promise<string | null> {
-        const { data: { session } } = await this.supabase.auth.getSession();
-        return session?.access_token || null;
+    getToken(): string | null {
+        return localStorage.getItem('token');
     }
 
     isLoggedIn(): boolean {
-        return !!this.currentUserSubject.value;
+        return !!this.getToken();
     }
 
     getCurrentUser(): User | null {
