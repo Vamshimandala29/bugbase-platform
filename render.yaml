@@ -1,15 +1,10 @@
 databases:
   - name: bugbase-db
-    plan: free
-    region: ohio
 
 services:
-  # Backend Spring Boot Service
   - type: web
     name: bugbase-backend
-    runtime: java
-    region: ohio
-    plan: free
+    env: java
     rootDirectory: backend
     buildCommand: mvn clean package -DskipTests
     startCommand: java -jar target/*.jar
@@ -31,18 +26,16 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-  # Frontend Static Site
   - type: web
     name: bugbase-frontend
-    runtime: static
-    region: ohio
+    env: static
     rootDirectory: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist/frontend/browser
     routes:
-      - type: rewrite
-        source: /api/*
+      - source: /api/*
+        type: rewrite
         destination: https://bugbase-backend.onrender.com/api/*
-      - type: rewrite
-        source: /*
+      - source: /*
+        type: rewrite
         destination: /index.html
