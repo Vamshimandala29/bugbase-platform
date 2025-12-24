@@ -7,6 +7,8 @@ import com.bugbase.repository.IssueRepository;
 import com.bugbase.repository.ProjectRepository;
 import com.bugbase.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Issues", description = "Management of project issues")
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("")
@@ -25,6 +28,7 @@ public class IssueController {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
+    @Operation(summary = "Get all issues for a project")
     @GetMapping("/projects/{projectId}/issues")
     public ResponseEntity<List<Issue>> getIssuesByProject(@PathVariable UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
@@ -33,6 +37,7 @@ public class IssueController {
         return ResponseEntity.ok(issueRepository.findByProjectId(projectId));
     }
 
+    @Operation(summary = "Create a new issue in a project")
     @PostMapping("/projects/{projectId}/issues")
     public ResponseEntity<Issue> createIssue(
             @PathVariable UUID projectId,
@@ -49,6 +54,7 @@ public class IssueController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get issue details by ID")
     @GetMapping("/issues/{id}")
     public ResponseEntity<Issue> getIssueById(@PathVariable UUID id) {
         return issueRepository.findById(id)
@@ -56,6 +62,7 @@ public class IssueController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Update an existing issue")
     @PatchMapping("/issues/{id}")
     public ResponseEntity<Issue> updateIssue(
             @PathVariable UUID id,
@@ -87,6 +94,7 @@ public class IssueController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Delete an issue")
     @DeleteMapping("/issues/{id}")
     public ResponseEntity<?> deleteIssue(@PathVariable UUID id) {
         if (!issueRepository.existsById(id)) {

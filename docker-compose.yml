@@ -1,36 +1,41 @@
 version: '3.8'
 
 services:
-  postgres:
+  db:
     image: postgres:15-alpine
-    container_name: bugbase-postgres
+    container_name: bugbase-db
     environment:
       POSTGRES_DB: bugbase
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    restart: always
 
   backend:
     build: ./backend
     container_name: bugbase-backend
     ports:
-      - "8081:8080"
+      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bugbase
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/bugbase
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-9a4f43424d5142504c444342525143434d5843564c4c47504443424d5142504c44}
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
-      postgres:
-        condition: service_healthy
+      - db
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    container_name: bugbase-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
     restart: on-failure
 
 volumes:

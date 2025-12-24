@@ -21,11 +21,12 @@ public class GlobalExceptionHandler {
         return errors;
     }
 
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    @ExceptionHandler(RuntimeException.class) // Broad for now, specific for TokenRefreshException later
-    public Map<String, String> handleRuntimeExceptions(RuntimeException ex) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    public Map<String, String> handleGlobalExceptions(Exception ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
+        error.put("error", "Internal Server Error");
+        error.put("message", ex.getMessage());
         return error;
     }
 }
