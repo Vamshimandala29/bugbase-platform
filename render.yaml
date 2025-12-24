@@ -1,3 +1,8 @@
+databases:
+  - name: bugbase-db
+    plan: free
+    region: ohio
+
 services:
   # Backend Spring Boot Service
   - type: web
@@ -9,16 +14,22 @@ services:
     buildCommand: mvn clean package -DskipTests
     startCommand: java -jar target/*.jar
     envVars:
-      - key: DB_URL
-        value: jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:5432/postgres
-      - key: DB_USERNAME
-        value: postgres.nqhaqlvjtvotfsgwmfnh
-      - key: DB_PASSWORD
-        sync: false # Set this in Render Dashboard
-      - key: SUPABASE_JWT_SECRET
-        sync: false # Set this in Render Dashboard
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: bugbase-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: bugbase-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: bugbase-db
+          property: password
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: JWT_SECRET
+        generateValue: true
 
   # Frontend Static Site
   - type: static
